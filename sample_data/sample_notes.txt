@@ -1,0 +1,9 @@
+The CPU consists of the ALU, the Control Unit and registers. The ALU performs arithmetic and logic operations. The Control Unit fetches and decodes instructions and controls the other parts of the CPU.
+
+Registers are small, very fast storage locations inside the CPU. EAX, EBX, ECX and EDX are general-purpose registers. ESP is the stack pointer and EIP is the instruction pointer.
+
+Memory stores programs and data. RAM is volatile, while ROM keeps its contents without power. The CPU reads and writes memory using addresses.
+
+Assembly instructions such as MOV, ADD, SUB, PUSH and POP operate on registers and memory. MOV copies data from a source to a destination.
+
+Addressing modes describe how an instruction finds its operand. Immediate addressing uses a constant in the instruction. Register addressing uses a register. Direct addressing uses a memory address. Indirect addressing uses a register that holds a memory address.
