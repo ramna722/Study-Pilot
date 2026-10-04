@@ -29,6 +29,9 @@ Student → Document → Topic → Planner → Quiz → Evaluator → Recommenda
 chunks, topics, study_plan, questions, student_answers,
 evaluation, weak_topics, recommendation
 
+The Document Agent accepts text, `.txt`/`.md` files, and PDFs. It writes
+bounded text chunks with source and page metadata to `state["chunks"]`.
+
 ## Setup
     pip install -r requirements.txt
     copy .env.example .env     (then paste your Gemini key inside .env)
