@@ -8,8 +8,10 @@ Nothing inside the quiz_agent/ folder needs to change.
 Reads : state["topics"]  (from Topic Agent), state["chunks"] (from Document Agent),
         state["weak_topics"] (optional, topic ids -> only quiz those topics)
 Writes: state["questions"]  = list of dicts like
-    {"topic_id": "t1", "topic": "Registers", "question": "...",
-     "options": ["A", "B", "C", "D"], "correct_answer": "...", "explanation": "..."}
+    {"question_id": 1, "topic_id": "t1", "topic": "Registers", "question": "...",
+     "options": ["A", "B", "C", "D"], "expected_answer": "...",
+     "correct_answer": "...", "explanation": "..."}
+(question_id and expected_answer are what the Evaluator Agent reads.)
 """
 import json
 import os
@@ -150,10 +152,12 @@ def quiz_agent_node(state):
             continue
         for q in result.questions:
             all_questions.append({
+                "question_id": len(all_questions) + 1,   # 1, 2, 3 ... (Evaluator needs this)
                 "topic_id": topic["id"],
                 "topic": topic["topic"],
                 "question": _get(q, "question"),
                 "options": _get(q, "options"),
+                "expected_answer": _get(q, "correct_answer"),  # Evaluator reads this name
                 "correct_answer": _get(q, "correct_answer"),
                 "explanation": _get(q, "explanation"),
             })
@@ -161,6 +165,7 @@ def quiz_agent_node(state):
     if not all_questions:
         raise ValueError("Quiz Agent could not create any questions.")
     state["questions"] = all_questions
+    state["student_answers"] = []   # a new quiz means the old answers no longer apply
     return state
 
 

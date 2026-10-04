@@ -17,8 +17,7 @@ except ImportError:
 
 DEFAULT_SYSTEM = "You are a helpful study assistant."
 MAX_TRIES = 5
-BUSY_WORDS = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded")
-
+BUSY_WORDS = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded", "disconnected", "timed out", "timeout", "Connection")
 
 def ask_llm(prompt: str, system: str = DEFAULT_SYSTEM) -> str:
     """Send a prompt to the chosen AI model and return its text answer."""

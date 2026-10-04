@@ -40,7 +40,7 @@ class StudyState(TypedDict, total=False):
     student_answers: list
     evaluation: list
     weak_topics: list
-    recommendation: str
+    recommendation: dict
     document: str           # path of the uploaded file (Document Agent reads this)
     file: str               # (Document Agent also accepts this name)
     exam_date: str          # input from the student (Planner Agent needs it)
@@ -158,11 +158,18 @@ if __name__ == "__main__":
 
     print("\n--- Phase 2: student sends answers ---")
     try:
-        # NOTE: this answer format is a guess. The Evaluator Agent decides the real format.
-        state["student_answers"] = [{"topic_id": "t1", "answer": "my answer"}]
+        # Pretend the student answers: every 1st question right, every 2nd one wrong.
+        answers = []
+        for i, q in enumerate(state["questions"]):
+            text = q["expected_answer"] if i % 2 == 0 else "I do not know"
+            answers.append({"question_id": q["question_id"], "student_answer": text})
+        state["student_answers"] = answers
+
         state = app.invoke(state)
         print("weak     :", state["weak_topics"])
-        print("advice   :", state["recommendation"])
-    except Exception as error:
-        print("Phase 2 stopped:", repr(error))
-        print("(Phase 1 worked. Phase 2 needs the answer format the Evaluator Agent expects.)")
+        print("advice   :", str(state["recommendation"])[:600])
+        print("new quiz :", len(state["questions"]), "questions for the weak topics",
+              sorted({q["topic_id"] for q in state["questions"]}))
+    except Exception:
+        import traceback
+        traceback.print_exc()
