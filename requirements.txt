@@ -2,4 +2,5 @@ python-dotenv
 groq
 google-genai
 streamlit
+pytest==9.1.1
 pypdf
