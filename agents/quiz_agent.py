@@ -11,8 +11,10 @@ Writes: state["questions"]  = list of dicts like
     {"topic_id": "t1", "topic": "Registers", "question": "...",
      "options": ["A", "B", "C", "D"], "correct_answer": "...", "explanation": "..."}
 """
+import json
 import os
 import sys
+import time
 
 try:  # read the .env file (API keys)
     from dotenv import load_dotenv
@@ -42,11 +44,58 @@ class _GeminiLLM:
         return ask_llm(prompt, "You are a helpful Quiz Agent for StudyPilot.")
 
 
+def _normalize_quiz_json(text):
+    """AIs answer in different JSON shapes. Convert them all to {"questions": [...]}."""
+    raw = text.strip()
+    if raw.startswith("```"):
+        raw = raw.strip("`")
+        if raw.lower().startswith("json"):
+            raw = raw[4:]
+    try:
+        data = json.loads(raw.strip())
+    except ValueError:
+        return text  # not JSON: leave it, the Quiz Agent will report the problem
+    questions = None
+    if isinstance(data, list):
+        questions = data
+    elif isinstance(data, dict):
+        for key in ("questions", "quiz"):
+            value = data.get(key)
+            if isinstance(value, dict):          # shape: {"quiz": {"questions": [...]}}
+                value = value.get("questions") or value.get("quiz")
+            if isinstance(value, list):
+                questions = value
+                break
+    if questions is None:
+        return text
+    return json.dumps({"questions": questions})
+
+
+class _SafeLLM:
+    """Wraps the AI client: fixes the JSON shape and retries when the AI is busy (503/429)."""
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    def generate(self, prompt):
+        for attempt in range(4):
+            try:
+                return _normalize_quiz_json(self.inner.generate(prompt))
+            except Exception as error:
+                busy = any(word in str(error) for word in ("503", "UNAVAILABLE", "429"))
+                if busy and attempt < 3:
+                    time.sleep(3 * (attempt + 1))  # wait 3s, 6s, 9s then try again
+                    continue
+                raise
+
+
 def _make_agent():
     if os.getenv("GROQ_API_KEY"):
-        return QuizAgent()                      # teammate's original setup (Groq)
-    agent = QuizAgent.__new__(QuizAgent)        # no Groq key -> use Gemini instead
-    agent.llm = _GeminiLLM()
+        agent = QuizAgent()                     # teammate's original setup (Groq)
+    else:
+        agent = QuizAgent.__new__(QuizAgent)    # no Groq key -> use Gemini instead
+        agent.llm = _GeminiLLM()
+    agent.llm = _SafeLLM(agent.llm)
     return agent
 
 
